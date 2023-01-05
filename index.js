@@ -29,11 +29,11 @@ let intReturnCode = 0;                          // 結果コード
 /* ボスデータ定義　　*/
 const BossData = require('./BossManager.js');
 let bossdata = [];
-bossdata.push(new BossData(1, 'ワイバーン', 14500, aplConst.discord_test.message.vote1)); 
-bossdata.push(new BossData(2, 'ライライ', 15000, aplConst.discord_test.message.vote2)); 
-bossdata.push(new BossData(3, 'オークチーフ', 17500, aplConst.discord_test.message.vote3)); 
-bossdata.push(new BossData(4, 'トライロッカー', 19500, aplConst.discord_test.message.vote4)); 
-bossdata.push(new BossData(5, 'レサトパルト', 21000, aplConst.discord_test.message.vote5)); 
+bossdata.push(new BossData(1, 'ワイバーン', 14500, aplConst.discord_server.message.vote1)); 
+bossdata.push(new BossData(2, 'ライライ', 15000, aplConst.discord_server.message.vote2)); 
+bossdata.push(new BossData(3, 'オークチーフ', 17500, aplConst.discord_server.message.vote3)); 
+bossdata.push(new BossData(4, 'トライロッカー', 19500, aplConst.discord_server.message.vote4)); 
+bossdata.push(new BossData(5, 'レサトパルト', 21000, aplConst.discord_server.message.vote5)); 
 
 /* ユーザIDとサーバ表示名のマッピング */
 let memberNameMap = new Map();
@@ -132,12 +132,12 @@ function init(){
             let boss;
 
             // サーバ内のユーザ情報を取得
-            const members = await client.guilds.cache.get(aplConst.discord_test.guild).members.fetch();
+            const members = await client.guilds.cache.get(aplConst.discord_server.guild).members.fetch();
             members.forEach(function(member) {
                 memberNameMap.set(member.id, member.displayName);
             });
             
-            const messages = await client.channels.cache.get(aplConst.discord_test.chnanel.vote).messages.fetch();
+            const messages = await client.channels.cache.get(aplConst.discord_server.chnanel.vote).messages.fetch();
 
             for(boss in bossdata){
                 // 管理用メッセージにリアクション追加
@@ -191,13 +191,13 @@ async function main(){
     client.on('messageCreate', message =>{
         let param = message.content.split(' ');
         // logUtil.writeLog(aplConst.log.all, 'debug', message.content.toString());
-        if(message.channelId == aplConst.discord_test.chnanel.vote){
+        if(message.channelId == aplConst.discord_server.chnanel.vote){
             if(message.content.includes('bot1')){
-                message.channelId = aplConst.discord_test.channel.post;
+                message.channelId = aplConst.discord_server.channel.post;
                 message.channel.send('test ' + message.author.username);
             }
             else if(message.content.includes('bot2')){
-                message.channelId = aplConst.discord_test.channel.post;
+                message.channelId = aplConst.discord_server.channel.post;
                 let user = message.author.toString();
                 message.channel.send('test ' + user);
             }
@@ -257,19 +257,19 @@ async function main(){
         if(!user.bot){
             switch (reaction.message.id){
                 // ボス参加者追加
-                case aplConst.discord_test.message.vote1:
+                case aplConst.discord_server.message.vote1:
                     addBossUser(0, user.id, reactionName);
                     break;
-                case aplConst.discord_test.message.vote2:
+                case aplConst.discord_server.message.vote2:
                     addBossUser(1, user.id, reactionName);
                     break;
-                case aplConst.discord_test.message.vote3:
+                case aplConst.discord_server.message.vote3:
                     addBossUser(2, user.id, reactionName);
                     break;
-                case aplConst.discord_test.message.vote4:
+                case aplConst.discord_server.message.vote4:
                     addBossUser(3, user.id, reactionName);
                     break;
-                case aplConst.discord_test.message.vote5:
+                case aplConst.discord_server.message.vote5:
                     addBossUser(4, user.id, reactionName);
                     break;
             }
@@ -290,19 +290,19 @@ async function main(){
         if(!user.bot){
             switch (reaction.message.id){
                 // ボス参加者削除
-                case aplConst.discord_test.message.vote1:
+                case aplConst.discord_server.message.vote1:
                     deleteBossUser(0, user.id, reactionName);
                     break;
-                case aplConst.discord_test.message.vote2:
+                case aplConst.discord_server.message.vote2:
                     deleteBossUser(1, user.id, reactionName);
                     break;
-                case aplConst.discord_test.message.vote3:
+                case aplConst.discord_server.message.vote3:
                     deleteBossUser(2, user.id, reactionName);
                     break;
-                case aplConst.discord_test.message.vote4:
+                case aplConst.discord_server.message.vote4:
                     deleteBossUser(3, user.id, reactionName);
                     break;
-                case aplConst.discord_test.message.vote5:
+                case aplConst.discord_server.message.vote5:
                     deleteBossUser(4, user.id, reactionName);
                     break;
             }
@@ -318,8 +318,8 @@ async function messageFetch() {
     let messageId;
     let target;
 
-    channel = await client.channels.cache.get(aplConst.discord_test.chnanel.vote);
-    messageId = aplConst.discord_test.message;
+    channel = await client.channels.cache.get(aplConst.discord_server.chnanel.vote);
+    messageId = aplConst.discord_server.message;
 
     for(target in messageId){
         message = await channel.messages.fetch(messageId[target]);
@@ -335,7 +335,7 @@ async function messageFetch() {
  */
 async function createBossMessage(boss) {
     let text = boss.createInfoText(memberNameMap);
-    let message = await client.channels.cache.get(aplConst.discord_test.chnanel.post).send(text);
+    let message = await client.channels.cache.get(aplConst.discord_server.chnanel.post).send(text);
     boss.manageId.push(message.id);
     return message;
 }
@@ -373,7 +373,7 @@ function addBossUser(boss, userId, reactionName) {
  * @param {number} boss ボス番号
  */
 function editBossText(boss) {
-    const target = client.channels.cache.get(aplConst.discord_test.chnanel.post).messages.cache.get(bossdata[boss].manageId[0]);
+    const target = client.channels.cache.get(aplConst.discord_server.chnanel.post).messages.cache.get(bossdata[boss].manageId[0]);
     const text = bossdata[boss].createInfoText(memberNameMap);
     target.edit(text);                
 }
