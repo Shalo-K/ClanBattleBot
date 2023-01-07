@@ -131,7 +131,7 @@ function init(){
             let messageReactions;
             let boss;
 
-            // サーバ内のユーザ情報を取得
+            // サーバ内のユーザ情報を取得            
             const members = await client.guilds.cache.get(aplConst.discord_server.guild).members.fetch();
             members.forEach(function(member) {
                 memberNameMap.set(member.id, member.displayName);
@@ -160,12 +160,8 @@ function init(){
                     if(!user.bot){
                         bossdata[boss].controllAttendUser('add', user.id, 'm');
                     }
-                });                
+                });
             
-            createBossMessage(bossdata[boss]).then(message =>{
-                // message.react('⚔️');
-                // message.react('🧙');
-            });
         }
         logUtil.writeLog(aplConst.log.sys, 'info', 'リアクション対象のfetch完了');
         });
@@ -186,7 +182,7 @@ function init(){
 async function main(){
 
     logUtil.writeLog(aplConst.log.all, 'debug', 'function "main" start');
-
+    
     // メッセージ入力時の反応
     client.on('messageCreate', message =>{
         let param = message.content.split(' ');
@@ -203,42 +199,105 @@ async function main(){
             }
         }
 
-        /** 現在HP修正
-         * !hpedit ボス番号 現在HP
-         */
-        if(message.content.includes('!hpedit')){
-            if(!isNaN(param[1])){
-                let boss = parseInt(param[1]) - 1;
-                let hp = Number(param[2]);
-                if(boss > -1 && boss < 5 && !isNaN(hp)){
-                    bossdata[boss].setCurHp(hp);
-                    bossdata[boss].createInfoText(memberNameMap);
-                    editBossText(boss);
+        // コマンド専用チャンネルからの入力
+        if(message.channelId == aplConst.discord_server.chnanel.command){
+            /** ボス情報メッセージ作成
+             * !create
+             */
+            if(message.content.includes('!create')){
+                let boss;
+                for(boss in bossdata){
+                    createBossMessage(bossdata[boss]).then(message =>{
+                        message.react('⚔️');
+                        message.react('🧙');
+                    });
                 }
             }
-        }
-
-        /** ボス情報修正
-         * !edit ボス番号 ボス名称 MaxHP
-         */
-        if(message.content.includes('!edit')){
-            if(!isNaN(param[1])){
-                let boss = parseInt(param[1]) - 1;
-                let hp = Number(param[3]);
-                if(boss > -1 && boss < 5 && !isNaN(hp)){
-                    bossdata[boss].setName(param[2]);
-                    bossdata[boss].setMaxHp(hp);
-                    bossdata[boss].setCurHp(hp);
-                    bossdata[boss].createInfoText(memberNameMap);
-                    editBossText(boss);
+            
+            /** 現在HP修正
+             * !hpedit ボス番号 現在HP
+             */
+            if(message.content.includes('!hpedit')){
+                if(!isNaN(param[1])){
+                    let boss = parseInt(param[1]) - 1;
+                    let hp = Number(param[2]);
+                    if(boss > -1 && boss < 5 && !isNaN(hp)){
+                        bossdata[boss].setCurHp(hp);
+                        bossdata[boss].createInfoText(memberNameMap);
+                        editBossText(boss);
+                    }
                 }
             }
-        }
 
-        // サーバ停止
-        if(message.content.includes('!shutdown')){
-            console.log('サーバ停止コマンドが実行されました');
-            process.exit();
+            /** ボス情報修正
+             * !edit ボス番号 ボス名称 MaxHP
+             */
+            if(message.content.includes('!edit')){
+                if(!isNaN(param[1])){
+                    let boss = parseInt(param[1]) - 1;
+                    let hp = Number(param[3]);
+                    if(boss > -1 && boss < 5 && !isNaN(hp)){
+                        bossdata[boss].setName(param[2]);
+                        bossdata[boss].setMaxHp(hp);
+                        bossdata[boss].setCurHp(hp);
+                        bossdata[boss].createInfoText(memberNameMap);
+                        editBossText(boss);
+                    }
+                }
+            }
+
+            /** ボス管理メッセージID修正
+             * !manage ボス番号 メッセージID
+             */
+            if(message.content.includes('!manage')){
+                if(!isNaN(param[1])){
+                    let boss = parseInt(param[1]) - 1;
+                    if(boss > -1 && boss < 5){
+                        bossdata[boss].setManageId(param[2]);
+                    }
+                }
+            }
+
+            /** ボス参加メッセージID修正
+             * !vote ボス番号 メッセージID
+             */
+            if(message.content.includes('!vote')){
+                if(!isNaN(param[1])){
+                    let boss = parseInt(param[1]) - 1;
+                    if(boss > -1 && boss < 5){
+                        bossdata[boss].setVoteId(param[2]);
+                        bossdata[boss].clearAttendList();
+
+                        // リアクションの再取得
+                        client.channels.cache.get(aplConst.discord_server.chnanel.vote).messages.fetch().then(messages =>{
+                            // 物理
+                            messages.get(bossdata[boss].voteId).reactions.cache.get('⚔️').users.fetch().then(messageReactions =>{
+                                messageReactions.forEach(function(user) {
+                                    if(!user.bot){
+                                        bossdata[boss].controllAttendUser('add', user.id, 'b');
+                                    }
+                                });
+                            });
+
+                            // 魔法
+                            messages.get(bossdata[boss].voteId).reactions.cache.get('🧙').users.fetch().then(messageReactions =>{
+                                messageReactions.forEach(function(user) {
+                                    logUtil.writeLog(aplConst.log.all, 'debug', 'userM:' + user);
+                                    if(!user.bot){
+                                        bossdata[boss].controllAttendUser('add', user.id, 'm');
+                                    }
+                                });
+                            });
+                        });
+                    }
+                }
+            }
+            
+            // サーバ停止
+            if(message.content.includes('!shutdown')){
+                console.log('サーバ停止コマンドが実行されました');
+                process.exit();
+            }
         }
     });
 
@@ -253,24 +312,46 @@ async function main(){
             case '🧙':
                 reactionName = 'm';
                 break;
+            case '❌':
+                if(reaction.message.author.id == aplConst.discord_server.client && !user.bot){
+                    reaction.message.delete();
+                }
+                break;
         }
         if(!user.bot){
             switch (reaction.message.id){
                 // ボス参加者追加
-                case aplConst.discord_server.message.vote1:
+                case bossdata[0].voteId:
                     addBossUser(0, user.id, reactionName);
                     break;
-                case aplConst.discord_server.message.vote2:
+                case bossdata[1].voteId:
                     addBossUser(1, user.id, reactionName);
                     break;
-                case aplConst.discord_server.message.vote3:
+                case bossdata[2].voteId:
                     addBossUser(2, user.id, reactionName);
                     break;
-                case aplConst.discord_server.message.vote4:
+                case bossdata[3].voteId:
                     addBossUser(3, user.id, reactionName);
                     break;
-                case aplConst.discord_server.message.vote5:
+                case bossdata[4].voteId:
                     addBossUser(4, user.id, reactionName);
+                    break;
+                
+                // 凸宣言
+                case bossdata[0].manageId[0]:
+                    reportAttack(0, user.id, reactionName);
+                    break;
+                case bossdata[1].manageId[0]:
+                    reportAttack(1, user.id, reactionName);
+                    break;
+                case bossdata[2].manageId[0]:
+                    reportAttack(2, user.id, reactionName);
+                    break;
+                case bossdata[3].manageId[0]:
+                    reportAttack(3, user.id, reactionName);
+                    break;
+                case bossdata[4].manageId[0]:
+                    reportAttack(4, user.id, reactionName);
                     break;
             }
         }
@@ -290,20 +371,20 @@ async function main(){
         if(!user.bot){
             switch (reaction.message.id){
                 // ボス参加者削除
-                case aplConst.discord_server.message.vote1:
+                case bossdata[0].voteId:
                     deleteBossUser(0, user.id, reactionName);
                     break;
-                case aplConst.discord_server.message.vote2:
-                    deleteBossUser(1, user.id, reactionName);
+                case bossdata[1].voteId:
+                        deleteBossUser(1, user.id, reactionName);
                     break;
-                case aplConst.discord_server.message.vote3:
-                    deleteBossUser(2, user.id, reactionName);
+                case bossdata[2].voteId:
+                        deleteBossUser(2, user.id, reactionName);
                     break;
-                case aplConst.discord_server.message.vote4:
-                    deleteBossUser(3, user.id, reactionName);
+                case bossdata[3].voteId:
+                        deleteBossUser(3, user.id, reactionName);
                     break;
-                case aplConst.discord_server.message.vote5:
-                    deleteBossUser(4, user.id, reactionName);
+                case bossdata[4].voteId:
+                        deleteBossUser(4, user.id, reactionName);
                     break;
             }
         }
@@ -373,7 +454,52 @@ function addBossUser(boss, userId, reactionName) {
  * @param {number} boss ボス番号
  */
 function editBossText(boss) {
-    const target = client.channels.cache.get(aplConst.discord_server.chnanel.post).messages.cache.get(bossdata[boss].manageId[0]);
-    const text = bossdata[boss].createInfoText(memberNameMap);
-    target.edit(text);                
+    // 管理IDが未定義の場合、編集を実施しない
+    if(bossdata[boss].manageId.length != 0){
+        const text = bossdata[boss].createInfoText(memberNameMap);
+        client.channels.cache.get(aplConst.discord_server.chnanel.post).messages.fetch(bossdata[boss].manageId[0]).then(message =>{
+            message.edit(text);
+        });
+    }
+}
+
+/**
+ * 凸情報記録
+ * @param {number} boss ボス番号
+ * @param {string} user ユーザID
+ * @param {string} reactionType リアクションの種類(物理/魔法)
+ */
+function reportAttack(boss, user, reactionType) {    
+    let text;
+    let channel;
+    let date = new Date();
+    let dateFormat = date.getFullYear() + '/' + ('0' + (date.getMonth() + 1)).slice(-2)  + '/' + ('0' + date.getDay()).slice(-2) + ' '
+                        + date.getHours() + ':' + ('0' + date.getMinutes()).slice(-2) + ':' + ('0' + date.getSeconds()).slice(-2);
+    
+    if(reactionType == 'b'){
+        // 物理
+        if(bossdata[boss].attendB.indexOf(user) !== -1){
+            channel = aplConst.discord_server.chnanel.report;
+            text = '```' + dateFormat + '  ' + memberNameMap.get(user) + '  ' + bossdata[boss].name + '(物理)' + '```';
+        }else{
+            // 凸希望に入っていない場合
+            channel = aplConst.discord_server.chnanel.post;
+            text = '```' + memberNameMap.get(user) +  '\n対象のボスに参加していません ' + bossdata[boss].name + '(物理)```';
+        }
+    }else if(reactionType == 'm'){
+        // 魔法
+        if(bossdata[boss].attendM.indexOf(user) !== -1){
+            channel = aplConst.discord_server.chnanel.report;
+            text = '```' + dateFormat + '  '  + memberNameMap.get(user) + '  ' + bossdata[boss].name + '(魔法)' + '```';
+        }else{
+            // 凸希望に入っていない場合
+            channel = aplConst.discord_server.chnanel.post;
+            text = '```' + memberNameMap.get(user) +  '\n対象のボスに参加していません ' + bossdata[boss].name + '(魔法)```';
+        }
+    }
+
+    // メッセージ送信
+    client.channels.cache.get(channel).send(text).then(sent =>{
+        sent.react('❌');
+    });
 }

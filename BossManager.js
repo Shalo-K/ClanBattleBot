@@ -60,6 +60,23 @@ class BossData {
     }
 
     /**
+     * ボスの管理メッセージIDを変更する
+     * @param {string} manageId manageID
+     */
+     setManageId(manageId){
+        this.manageId.length = 0;
+        this.manageId.push(manageId);
+    }
+
+    /**
+     * ボスの投票用IDを変更する
+     * @param {string} voteId voteID
+     */
+    setVoteId(voteId){
+        this.voteId = voteId;
+    }
+
+    /**
      * ボス情報のテキストを編集する
      * @param {Map} memberNameMap ユーザ情報 
      * @returns {string} メッセージテキスト
@@ -90,8 +107,10 @@ class BossData {
      */
     controllAttendUser(controllType, userId, reactionType) {
         switch(reactionType){
+            // 物理
             case 'b':
                 switch(controllType){
+                    // 追加
                     case 'add':
                         if (!this.attendB.includes(userId)){
                             this.attendB.push(userId);
@@ -99,6 +118,8 @@ class BossData {
                             this.sampleB.set(userId, '0');
                         }
                         break;
+                    
+                    // 削除
                     case 'del':
                         if (this.attendB.includes(userId)){
                             this.attendB = this.attendB.filter(item => item.match(userId) == null);
@@ -108,8 +129,11 @@ class BossData {
                         break;
                 }
                 break;
+            
+            // 魔法
             case 'm':
                 switch(controllType){
+                    // 追加
                     case 'add':
                         if (!this.attendM.includes(userId)){
                             this.attendM.push(userId);
@@ -117,6 +141,8 @@ class BossData {
                             this.sampleM.set(userId, '0');
                         }
                         break;
+                    
+                    // 削除
                     case 'del':
                         if (this.attendM.includes(userId)){
                             this.attendM = this.attendM.filter(item => item.match(userId) == null);
@@ -127,6 +153,18 @@ class BossData {
                 }
                 break;
         }
+    }
+
+    /**
+     * 参戦者の情報をリセットする
+     */
+    clearAttendList(){
+        this.attendB.length = 0;
+        this.attendM.length = 0;
+        this.attackB.clear;
+        this.attackM.clear;
+        this.sampleB.clear;
+        this.sampleM.clear;
     }
 }
 
