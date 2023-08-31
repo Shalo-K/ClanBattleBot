@@ -29,11 +29,46 @@ let intReturnCode = 0;                          // 結果コード
 /* ボスデータ定義　　*/
 const BossData = require('./BossManager.js');
 let bossdata = [];
-bossdata.push(new BossData(1, 'ワイバーン', 14500, aplConst.discord_server.message.vote1)); 
-bossdata.push(new BossData(2, 'ライライ', 15000, aplConst.discord_server.message.vote2)); 
-bossdata.push(new BossData(3, 'オークチーフ', 17500, aplConst.discord_server.message.vote3)); 
-bossdata.push(new BossData(4, 'トライロッカー', 19500, aplConst.discord_server.message.vote4)); 
-bossdata.push(new BossData(5, 'レサトパルト', 21000, aplConst.discord_server.message.vote5)); 
+bossdata.push(new BossData(
+	1,
+	'1ボス',
+	14500,
+	aplConst.discord_server.message.manage1,
+	aplConst.discord_server.message.schedule1,
+	aplConst.discord_server.message.vote1
+)); 
+bossdata.push(new BossData(
+	2,
+	'2ボス',
+	15000,
+	aplConst.discord_server.message.manage2,
+	aplConst.discord_server.message.schedule2,
+	aplConst.discord_server.message.vote2
+)); 
+bossdata.push(new BossData(
+	3,
+	'3ボス',
+	17500,
+	aplConst.discord_server.message.manage3,
+	aplConst.discord_server.message.schedule3,
+	aplConst.discord_server.message.vote3
+)); 
+bossdata.push(new BossData(
+	4,
+	'4ボス',
+	19500,
+	aplConst.discord_server.message.manage4,
+	aplConst.discord_server.message.schedule4,
+	aplConst.discord_server.message.vote4
+)); 
+bossdata.push(new BossData(
+	5,
+	'5ボス',
+	21000,
+	aplConst.discord_server.message.manage5,
+	aplConst.discord_server.message.schedule5,
+	aplConst.discord_server.message.vote5
+)); 
 
 /* ユーザIDとサーバ表示名のマッピング */
 let memberNameMap = new Map();
@@ -127,40 +162,56 @@ function init(){
 
         // 起動後の初期処理
         client.on('ready', async function(){
-            let message;
             let messageReactions;
             let boss;
 
-            // サーバ内のユーザ情報を取得            
+            // サーバ内のユーザ情報を取得
             const members = await client.guilds.cache.get(aplConst.discord_server.guild).members.fetch();
             members.forEach(function(member) {
                 memberNameMap.set(member.id, member.displayName);
             });
             
-            const messages = await client.channels.cache.get(aplConst.discord_server.chnanel.vote).messages.fetch();
+            const voteMessages = await client.channels.cache.get(aplConst.discord_server.chnanel.vote).messages.fetch();
+            const scheduleMessages = await client.channels.cache.get(aplConst.discord_server.chnanel.schedule).messages.fetch();
 
             for(boss in bossdata){
                 // 管理用メッセージにリアクション追加
-                message = await messages.get(bossdata[boss].voteId).react('⚔️');
-                message = await messages.get(bossdata[boss].voteId).react('🧙');
+                await voteMessages.get(bossdata[boss].voteId).react('⚔️');
+                await voteMessages.get(bossdata[boss].voteId).react('🧙');
+                
+                await scheduleMessages.get(bossdata[boss].manageId[1]).react('⚔️');
+                await scheduleMessages.get(bossdata[boss].manageId[1]).react('🧙');
                 
                 // 物理
-                messageReactions = await messages.get(bossdata[boss].voteId).reactions.cache.get('⚔️').users.fetch();
+                messageReactions = await voteMessages.get(bossdata[boss].voteId).reactions.cache.get('⚔️').users.fetch();
                 messageReactions.forEach(function(user) {
-                    logUtil.writeLog(aplConst.log.all, 'debug', 'userB:' + user);
                     if(!user.bot){
                         bossdata[boss].controllAttendUser('add', user.id, 'b');
                     }
                 });
                 
-                // 魔法
-                messageReactions = await messages.get(bossdata[boss].voteId).reactions.cache.get('🧙').users.fetch();
+                messageReactions = await scheduleMessages.get(bossdata[boss].manageId[1]).reactions.cache.get('⚔️').users.fetch();
                 messageReactions.forEach(function(user) {
-                    logUtil.writeLog(aplConst.log.all, 'debug', 'userM:' + user);
+                    if(!user.bot){
+                        bossdata[boss].controllScheduleUser('add', user.id, 'b');
+                    }
+                });
+                
+                // 魔法
+                messageReactions = await voteMessages.get(bossdata[boss].voteId).reactions.cache.get('🧙').users.fetch();
+                messageReactions.forEach(function(user) {
                     if(!user.bot){
                         bossdata[boss].controllAttendUser('add', user.id, 'm');
                     }
                 });
+                
+                messageReactions = await scheduleMessages.get(bossdata[boss].manageId[1]).reactions.cache.get('🧙').users.fetch();
+                messageReactions.forEach(function(user) {
+                    if(!user.bot){
+                        bossdata[boss].controllScheduleUser('add', user.id, 'm');
+                    }
+                });
+                logUtil.writeLog(aplConst.log.all, 'debug', bossdata[boss]);
             
         }
         logUtil.writeLog(aplConst.log.sys, 'info', 'リアクション対象のfetch完了');
@@ -182,25 +233,15 @@ function init(){
 async function main(){
 
     logUtil.writeLog(aplConst.log.all, 'debug', 'function "main" start');
-    
+
     // メッセージ入力時の反応
-    client.on('messageCreate', message =>{
+    client.on('messageCreate', message => {
         let param = message.content.split(' ');
         // logUtil.writeLog(aplConst.log.all, 'debug', message.content.toString());
-        if(message.channelId == aplConst.discord_server.chnanel.vote){
-            if(message.content.includes('bot1')){
-                message.channelId = aplConst.discord_server.channel.post;
-                message.channel.send('test ' + message.author.username);
-            }
-            else if(message.content.includes('bot2')){
-                message.channelId = aplConst.discord_server.channel.post;
-                let user = message.author.toString();
-                message.channel.send('test ' + user);
-            }
-        }
 
         // コマンド専用チャンネルからの入力
         if(message.channelId == aplConst.discord_server.chnanel.command){
+            logUtil.writeLog(aplConst.log.all, 'debug', message.content.toString());
             /** ボス情報メッセージ作成
              * !create
              */
@@ -208,6 +249,10 @@ async function main(){
                 let boss;
                 for(boss in bossdata){
                     createBossMessage(bossdata[boss]).then(message =>{
+                        message.react('⚔️');
+                        message.react('🧙');
+                    });
+                    createBossScheduleMessage(bossdata[boss]).then(message =>{
                         message.react('⚔️');
                         message.react('🧙');
                     });
@@ -293,6 +338,16 @@ async function main(){
                 }
             }
             
+            // サーバ内のユーザ情報を取得
+            if(message.content.includes('!user')){
+                memberNameMap.clear();
+                client.guilds.cache.get(aplConst.discord_server.guild).members.fetch().then(members =>{
+                    members.forEach(function(member) {
+                        memberNameMap.set(member.id, member.displayName);
+                    });
+                });
+            }
+            
             // サーバ停止
             if(message.content.includes('!shutdown')){
                 console.log('サーバ停止コマンドが実行されました');
@@ -353,6 +408,23 @@ async function main(){
                 case bossdata[4].manageId[0]:
                     reportAttack(4, user.id, reactionName);
                     break;
+                
+                // 凸先アンケ
+                case bossdata[0].manageId[1]:
+                    addBossScheduleUser(0, user.id, reactionName);
+                    break;
+                case bossdata[1].manageId[1]:
+                    addBossScheduleUser(1, user.id, reactionName);
+                    break;
+                case bossdata[2].manageId[1]:
+                    addBossScheduleUser(2, user.id, reactionName);
+                    break;
+                case bossdata[3].manageId[1]:
+                    addBossScheduleUser(3, user.id, reactionName);
+                    break;
+                case bossdata[4].manageId[1]:
+                    addBossScheduleUser(4, user.id, reactionName);
+                    break;
             }
         }
     });
@@ -386,6 +458,23 @@ async function main(){
                 case bossdata[4].voteId:
                         deleteBossUser(4, user.id, reactionName);
                     break;
+                
+                // 凸先アンケ
+                case bossdata[0].manageId[1]:
+                    deleteBossScheduleUser(0, user.id, reactionName);
+                    break;
+                case bossdata[1].manageId[1]:
+                    deleteBossScheduleUser(1, user.id, reactionName);
+                    break;
+                case bossdata[2].manageId[1]:
+                    deleteBossScheduleUser(2, user.id, reactionName);
+                    break;
+                case bossdata[3].manageId[1]:
+                    deleteBossScheduleUser(3, user.id, reactionName);
+                    break;
+                case bossdata[4].manageId[1]:
+                    deleteBossScheduleUser(4, user.id, reactionName);
+                    break;
             }
         }
     });
@@ -417,7 +506,7 @@ async function messageFetch() {
 async function createBossMessage(boss) {
     let text = boss.createInfoText(memberNameMap);
     let message = await client.channels.cache.get(aplConst.discord_server.chnanel.post).send(text);
-    boss.manageId.push(message.id);
+    // boss.manageId.push(message.id);
     return message;
 }
 
@@ -458,6 +547,59 @@ function editBossText(boss) {
     if(bossdata[boss].manageId.length != 0){
         const text = bossdata[boss].createInfoText(memberNameMap);
         client.channels.cache.get(aplConst.discord_server.chnanel.post).messages.fetch(bossdata[boss].manageId[0]).then(message =>{
+            message.edit(text);
+        });
+    }
+}
+
+/** 
+ * @param {BossData} boss ボス情報オブジェクト
+ * @returns {Promise} 送信したメッセージ情報
+ */
+async function createBossScheduleMessage(boss) {
+    let text = boss.createScheduleText(memberNameMap);
+    let message = await client.channels.cache.get(aplConst.discord_server.chnanel.schedule).send(text);
+    // boss.manageId.push(message.id);
+    return message;
+}
+
+/**
+ * ボス情報にアンケユーザを追加する
+ * @param {number} boss ボス番号
+ * @param {string} userId ユーザID
+ * @param {string} reactionName リアクションの種類 
+ */
+function addBossScheduleUser(boss, userId, reactionName) {
+    // ボスオブジェクトにユーザを追加
+    bossdata[boss].controllScheduleUser('add', userId, reactionName);
+    
+    // メッセージ編集
+    editScheduleText(boss);
+}
+
+/**
+ * ボス情報からアンケユーザを削除する
+ * @param {number} boss ボス番号
+ * @param {string} userId ユーザID
+ * @param {string} reactionName リアクションの種類 
+ */
+ function deleteBossScheduleUser(boss, userId, reactionName) {
+    // ボスオブジェクトからユーザを削除
+    bossdata[boss].controllScheduleUser('del', userId, reactionName);
+    
+    // メッセージ編集
+    editScheduleText(boss);
+}
+
+/**
+ * ボス情報のアンケテキストを編集
+ * @param {number} boss ボス番号
+ */
+function editScheduleText(boss) {
+    // 管理IDが未定義の場合、編集を実施しない
+    if(bossdata[boss].manageId.length != 0){
+        const text = bossdata[boss].createScheduleText(memberNameMap);
+        client.channels.cache.get(aplConst.discord_server.chnanel.schedule).messages.fetch(bossdata[boss].manageId[1]).then(message =>{
             message.edit(text);
         });
     }
