@@ -1,24 +1,3 @@
-# import discord
-
-# class discordClient:
-#     '''
-#     Discordに接続するClientオブジェクトを管理するクラス
-
-#     Attributes
-#     ----------
-#     intent : Intent Client作成時のintent
-#     client : Client Clientオブジェクト
-#     '''
-#     def __init__(self):
-#         self.intent = discord.Intents(
-#             guilds = True,
-#             members = True,
-#             messages = True,
-#             reactions = True,
-#             message_content = True
-#         )
-#         self.client = discord.Client(intents=self.intent)
-
 def getChannelByName(guild, channelName):
     '''
     チャンネル名からチャンネルのオブジェクトを取得する。
