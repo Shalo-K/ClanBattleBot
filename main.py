@@ -15,8 +15,8 @@ cogs = aplConst.get("cogs")
 
 ##### Discordに接続 #####
 load_dotenv()
-# token = os.getenv("TOKEN")
-token = os.getenv("TOKEN_dev")
+token = os.getenv("TOKEN")
+# token = os.getenv("TOKEN_dev")
 
 ##### BotClientオブジェクト作成 #####
 class ClanBattleBot(commands.Bot):

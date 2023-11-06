@@ -31,10 +31,6 @@ class ClanBattleCommandManager(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
     
-    @app_commands.command(name = "hoge", description = "テスト1")
-    async def hoge(self, interaction: discord.Interaction):
-        await interaction.response.send_message("test1", ephemeral=True)
-
     @app_commands.command(name = "messageset", description = "操作用メッセージ作成")
     async def messageset(self, interaction: discord.Interaction, channel: ChannelList):
         '''
@@ -184,7 +180,7 @@ class ClanBattleReactionManager(commands.Cog):
                             content = embeds[0].to_dict()
                             for i in range(0, len(embeds[0].fields)):
                                 content["fields"][i]["value"] = ""
-                                if (content["fields"][j]["name"] == aplConst.get("embed.spare")):
+                                if (content["fields"][i]["name"] == aplConst.get("embed.spare")):
                                     # 予備枠の削除
                                     del content["fields"][i]
 
@@ -392,7 +388,6 @@ class ClanBattleReactionManager(commands.Cog):
                 logTime = formatUtil.datetimeFormat("now", "%Y/%m/%d %H:%M:%S")
                 nameInfo = userName + "(" + content["fields"][fieldIndex]["name"] + ")"
                 sent = await sendChannel.send(content="```" + logTime + " " + nameInfo + " " + titleArray[0] + "```")
-                # sent = await discordUtil.getChannelByName(message.guild, aplConst.get("channelName.memory")).send(content="```" + logTime + " " + nameInfo + " " + bossdata[i] + "```")
                 await sent.add_reaction(aplConst.get("reaction.x"))
         else:
             # ユーザー削除
