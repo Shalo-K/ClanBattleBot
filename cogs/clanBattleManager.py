@@ -154,7 +154,7 @@ class ClanBattleReactionManager(commands.Cog):
                             if (len(fieldIndex) == 1):
                                 # 編集対象が1つの場合、対象を直接指定して編集
                                 await self.editEmbedForCheck(messageObject, fieldIndex[0], userName)
-                            else:
+                            elif (len(fieldIndex) > 1):
                                 # 編集対象が複数ある場合、対象を確認するメッセージを送信
                                 sent = await messageObject.reply(content=userObject.mention + "凸が複数登録されています。反映する対象をリアクションで選択してください。\n||" + str(message.channel_id) + "\n" + str(message.message_id) + "||")
                                 for i in fieldIndex:
@@ -391,9 +391,9 @@ class ClanBattleReactionManager(commands.Cog):
                 await sent.add_reaction(aplConst.get("reaction.x"))
         else:
             # ユーザー削除
-            fieldValue = fieldValue.replace(("~~" + userName + "~~"), "")
-            fieldValue = fieldValue.replace(("~~~~"), "")
             fieldValue = fieldValue.replace(userName, "")
+            fieldValue = fieldValue.replace(("~~~~"), "")
+            fieldValue = fieldValue.replace(("\n\n"), "\n")
             if ((content["fields"][fieldIndex]["name"] == aplConst.get("embed.spare")) and (fieldValue == "")):
                 # 予備枠が空となる場合、フィールドごと削除する
                 del content["fields"][fieldIndex]
