@@ -11,6 +11,7 @@
         "vote"    : "凸先アンケート"
         ,"list"   : "凸参加一覧"
         ,"memory" : "凸宣言記録"
+        ,"action" : "botメッセージ"
         ,"boss1"  : "1ボス連携"
         ,"boss2"  : "2ボス連携"
         ,"boss3"  : "3ボス連携"
@@ -28,6 +29,7 @@
         ,"coffee"                  : "☕"
         ,"star"                    : "⭐"
         ,"thumbsup"                : "👍"
+        ,"thinking"                : "🤔"
     }
 
     ,"embed":{
@@ -37,5 +39,15 @@
         ,"magic"  : "🧙魔法"
         ,"re"     : "☕持ち越し"
         ,"spare"  : "⭐予備枠"
+    }
+
+    ,"message":{
+        "selectCheck"   : "凸が複数登録されています。反映する対象をリアクションで選択してください。"
+        ,"alertName"    : "[~~]や[||]を使用した名前は登録できません。別の名前に変更してください。"
+        ,"changeName"   : "名前の変更を検知しました。変更をbotに反映する場合は👍を押してください。"
+        ,"changeBefore" : "変更前："
+        ,"changeAfter"  : "変更後："
+        ,"channelId"    : "チャンネルID："
+        ,"messageId"    : "メッセージID："
     }
 }

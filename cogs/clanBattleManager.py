@@ -15,7 +15,8 @@ aplPath = os.getcwd()
 aplConst = AplConst(aplPath)
 
 
-class ChannelList(enum.Enum):
+##### コマンドパラメータ用のEnum #####
+class ChannelListEnum(enum.Enum):
     vote = aplConst.get("channelName.vote")
     list = aplConst.get("channelName.list")
 
@@ -32,7 +33,7 @@ class ClanBattleCommandManager(commands.Cog):
         self.bot = bot
     
     @app_commands.command(name = "messageset", description = "操作用メッセージ作成")
-    async def messageset(self, interaction: discord.Interaction, channel: ChannelList):
+    async def messageset(self, interaction: discord.Interaction, channel: ChannelListEnum):
         '''
         クランバトル操作用のメッセージを作成する。
         '''
@@ -85,6 +86,7 @@ class ClanBattleCommandManager(commands.Cog):
                 await interaction.followup.send("メッセージの作成に失敗しました。(" + channel.value + ")", ephemeral=True)
 
 
+##### リアクション操作 #####
 class ClanBattleReactionManager(commands.Cog):
     '''
     クランバトル用リアクション操作定義クラス
@@ -115,9 +117,11 @@ class ClanBattleReactionManager(commands.Cog):
             messageObject = await self.bot.get_channel(message.channel_id).fetch_message(message.message_id)
             messageText = messageObject.content.replace("`", "")
             embeds = messageObject.embeds
-            userObject = self.bot.get_guild(message.guild_id).get_member(message.user_id)
+            guildObject = self.bot.get_guild(message.guild_id)
+            userObject = guildObject.get_member(message.user_id)
             userName = userObject.display_name
-            if (messageObject.author.bot):
+
+            if (messageObject.author.id == int(aplConst.get("id.client"))):
                 # bot自身が作成したメッセージに対するリアクションの場合のアクション
                 if (bool(embeds)):
                     fieldIndex = None
@@ -156,7 +160,7 @@ class ClanBattleReactionManager(commands.Cog):
                                 await self.editEmbedForCheck(messageObject, fieldIndex[0], userName)
                             elif (len(fieldIndex) > 1):
                                 # 編集対象が複数ある場合、対象を確認するメッセージを送信
-                                sent = await messageObject.reply(content=userObject.mention + "凸が複数登録されています。反映する対象をリアクションで選択してください。\n||" + str(message.channel_id) + "\n" + str(message.message_id) + "||")
+                                sent = await messageObject.reply(content=userObject.mention + aplConst.get("message.selectCheck") + "\n||" + aplConst.get("message.channelId") + str(message.channel_id) + "\n" + aplConst.get("message.messageId") + str(message.message_id) + "||")
                                 for i in fieldIndex:
                                     # インデックスに応じたリアクションを追加
                                     if (i == 0):
@@ -255,7 +259,7 @@ class ClanBattleReactionManager(commands.Cog):
                                 await self.editEmbedForCheck(messageObject, fieldIndex[0], userName)
                             else:
                                 # 編集対象が複数ある場合、対象を確認するメッセージを送信
-                                sent = await messageObject.reply(content=userObject.mention + "凸が複数登録されています。反映する対象をリアクションで選択してください。\n||" + str(message.channel_id) + "\n" + str(message.message_id) + "||")
+                                sent = await messageObject.reply(content=userObject.mention + aplConst.get("message.selectCheck") + "\n||" + aplConst.get("message.channelId") + str(message.channel_id) + "\n" + aplConst.get("message.messageId") + str(message.message_id) + "||")
                                 for i in fieldIndex:
                                     # インデックスに応じたリアクションを追加
                                     if (i == 0):
@@ -324,23 +328,35 @@ class ClanBattleReactionManager(commands.Cog):
                     if ((messageObject.channel.name == aplConst.get("channelName.vote"))
                         or (messageObject.channel.name == aplConst.get("channelName.list"))):
                         deleteFlg = False
-                        # 複数の参加がある場合の再リアクション判定
                         messageText = messageObject.content.replace("||", "").split("\n")
-                        editMessage = await self.bot.get_channel(int(messageText[1])).fetch_message(int(messageText[2]))
-                        if (message.emoji.name == aplConst.get("reaction.crossed_swords")):
-                            await self.editEmbedForCheck(editMessage, 0, userName)
+
+                        if (message.emoji.name == aplConst.get("reaction.x")):
+                            # 削除リアクション
                             deleteFlg = True
-                        elif (message.emoji.name == aplConst.get("reaction.mage")):
-                            await self.editEmbedForCheck(editMessage, 1, userName)
-                            deleteFlg = True
-                        elif (message.emoji.name == aplConst.get("reaction.coffee")):
-                            await self.editEmbedForCheck(editMessage, 2, userName)
-                            deleteFlg = True
-                        elif (message.emoji.name == aplConst.get("reaction.star")):
-                            await self.editEmbedForCheck(editMessage, 3, userName)
-                            deleteFlg = True
-                        elif (message.emoji.name == aplConst.get("reaction.x")):
-                            deleteFlg = True
+
+                        elif (aplConst.get("message.selectCheck") in messageText[0]):
+                            # 複数の参加がある場合の再リアクション判定
+                            if (("~~" in userName) or ("||" in userName)):
+                                # 動作上使用できない絵文字が名前に含まれている場合、警告メッセージを送信
+                                sent = await messageObject.reply(content=userObject.mention + aplConst.get("message.alertName"))
+                                await sent.add_reaction(aplConst.get("reaction.x"))
+
+                            else:
+                                channelId = messageText[1].replace(aplConst.get("message.channelId"), "")
+                                messageId = messageText[2].replace(aplConst.get("message.messageId"), "")
+                                editMessage = await self.bot.get_channel(int(channelId)).fetch_message(int(messageId))
+                                if (message.emoji.name == aplConst.get("reaction.crossed_swords")):
+                                    await self.editEmbedForCheck(editMessage, 0, userName)
+                                    deleteFlg = True
+                                elif (message.emoji.name == aplConst.get("reaction.mage")):
+                                    await self.editEmbedForCheck(editMessage, 1, userName)
+                                    deleteFlg = True
+                                elif (message.emoji.name == aplConst.get("reaction.coffee")):
+                                    await self.editEmbedForCheck(editMessage, 2, userName)
+                                    deleteFlg = True
+                                elif (message.emoji.name == aplConst.get("reaction.star")):
+                                    await self.editEmbedForCheck(editMessage, 3, userName)
+                                    deleteFlg = True
                         
                         # 削除フラグが立っている場合、確認メッセージを削除
                         if (deleteFlg):
@@ -359,6 +375,44 @@ class ClanBattleReactionManager(commands.Cog):
 
                         # 後続のリアクション判定を実施しない
                         endFlag = True
+                    
+                    elif (messageObject.channel.name == aplConst.get("channelName.action")):
+                        # botメッセージチャンネル
+                        if (message.emoji.name == aplConst.get("reaction.thumbsup")):
+                            messageText = messageObject.content.split("\n")
+                            if (aplConst.get("message.changeName") in messageText[0]):
+                                # 名前変更操作
+                                deleteFlg = False
+
+                                # 前回の失敗リアクションがある場合、解除する
+                                for react in messageObject.reactions:
+                                    if ((react.emoji == aplConst.get("reaction.thinking"))
+                                        and (react.me)):
+                                        await react.remove(messageObject.author)
+
+                                beforeName = messageText[1].replace(aplConst.get("message.changeBefore"), "")
+                                afterName = messageText[2].replace(aplConst.get("message.changeAfter"), "")
+
+                                # 検索対象のチャンネル
+                                channelVote = discordUtil.getChannelByName(guildObject, aplConst.get("channelName.vote"))
+                                channelList = discordUtil.getChannelByName(guildObject, aplConst.get("channelName.list"))
+                                
+                                # 置換実行
+                                try:
+                                    await self.editEmbedForRename(channelVote, beforeName, afterName)
+                                    await self.editEmbedForRename(channelList, beforeName, afterName)
+                                    deleteFlg = True
+                                except Exception as e:
+                                    # 置換に失敗した場合、リアクションを追加
+                                    await messageObject.add_reaction(aplConst.get("reaction.thinking"))
+                                    await messageObject.remove_reaction(message.emoji, message.member)
+
+                                # 処理終了後にメッセージを削除する
+                                if (deleteFlg):
+                                    await messageObject.delete()
+
+                            # 後続のリアクション判定を実施しない
+                            endFlag = True
         
         # 判定終了
         return endFlag
@@ -430,8 +484,73 @@ class ClanBattleReactionManager(commands.Cog):
         await message.edit(embed=embed)
 
 
+    async def editEmbedForRename(self, channel, beforeName, afterName):
+        '''
+        メッセージのembedを編集し、既に登録されている名前を変更する。
+
+        Parameters
+        ----------
+        channel    : Channel 編集するメッセージを検索するチャンネル
+        beforeName : string  編集するembedのインデックス
+        afterName  : string  参加情報を変更するユーザー
+        '''
+        async for message in channel.history(limit = 100):
+            if (message.author.id == int(aplConst.get("id.client"))):
+                editFlag = False
+                embeds = message.embeds
+                if (bool(embeds)):
+                    # bot自身が生成したメッセージかつembedが使用されている場合、変更操作を実行
+                    for i in range(0, len(embeds[0].fields)):
+                        # メッセージ内の対象単語を全て置換
+                        tempString = embeds[0].fields[i].value
+                        embeds[0] = discordUtil.replaceAllForEmbedText(embeds[0], i, "value", beforeName, afterName)
+                        
+                        if (tempString != embeds[0].fields[i].value):
+                            editFlag = True
+
+                    if (editFlag):
+                        # 置換の前後を比較し、差分があった場合のみ変更を確定
+                        await message.edit(embed=embeds[0])
+
+
+##### ユーザ名変更操作 ######
+class ClanBattleNameManager(commands.Cog):
+    '''
+    クランバトル用名前変更定義クラス
+
+    Attributes
+    ----------
+    bot : Bot bot自身のオブジェクト
+    '''
+    def __init__(self, bot):
+        self.bot = bot
+
+    async def changeNickInEmbeds(self, before: discord.Member, after: discord.Member):
+        '''
+        embedのリストに登録されているユーザ名を変更する。
+        ユーザ名はユーザ情報のオブジェクトから取得する
+
+        Parameters
+        ----------
+        before : 変更前のユーザ情報
+        after  : 変更後のユーザ情報
+        '''
+        # 変更確認メッセージの送信チャンネル取得
+        sendChannel = discordUtil.getChannelByName(before.guild, aplConst.get("channelName.action"))
+
+        # 送信
+        sent = await sendChannel.send(content=
+                                      before.mention + aplConst.get("message.changeName") + "\n"
+                                        + aplConst.get("message.changeBefore") + before.nick + "\n" 
+                                        + aplConst.get("message.changeAfter") + after.nick
+                                    )
+        # 操作用リアクション
+        await sent.add_reaction(aplConst.get("reaction.thumbsup"))
+
+
 ##### Cog読み込み時に実行されるメソッド #####
 async def setup(bot):
     # Botを渡してインスタンス化し、Botにコグとして登録する
     await bot.add_cog(ClanBattleReactionManager(bot))
     await bot.add_cog(ClanBattleCommandManager(bot))
+    await bot.add_cog(ClanBattleNameManager(bot))

@@ -1,3 +1,6 @@
+##### import #####
+import discord
+
 def getChannelByName(guild, channelName):
     '''
     チャンネル名からチャンネルのオブジェクトを取得する。
@@ -54,3 +57,28 @@ async def getMessageAuthorIdFromPayload(client, payload):
     messageObject = await client.get_channel(payload.channel_id).fetch_message(payload.message_id)
     id = messageObject.author.id
     return id
+
+def replaceAllForEmbedText(embed, index, content, beforeString, afterString):
+    '''
+    embed、インデックス、要素名を指定して、含まれるテキスト内容を全て置換したembedを返却する。
+    実際のメッセージ更新は実行しない。
+    
+    Parameters
+    ----------
+    embed        : Embed  置換対象のembedオブジェクト
+    index        : int    操作対象のインデックス
+    content      : string 操作対象の要素名
+    beforeString : string 変更前の文字列
+    afterString  : string 変更後の文字列
+
+    Returns
+    -------
+    Embed : 置換後のembedオブジェクト
+    '''
+    tempDict = embed.to_dict()
+
+    # メッセージ内の対象単語を全て置換
+    tempDict["fields"][index][content] = tempDict["fields"][index][content].replace(beforeString, afterString)
+    
+    # 置換後のembedオブジェクトを返却
+    return discord.Embed.from_dict(tempDict)

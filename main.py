@@ -16,7 +16,6 @@ cogs = aplConst.get("cogs")
 ##### Discordに接続 #####
 load_dotenv()
 token = os.getenv("TOKEN")
-# token = os.getenv("TOKEN_dev")
 
 ##### BotClientオブジェクト作成 #####
 class ClanBattleBot(commands.Bot):
@@ -73,6 +72,17 @@ if __name__ == '__main__':
         readCog = bot.get_cog("ClanBattleReactionManager")
         if readCog is not None:
             endFlag = await readCog.reactionAdd(message)
+
+    @bot.event
+    async def on_member_update(before, after):
+        # リアクションが追加された時の処理
+        endFlag = False
+
+        # クランバトル用機能の呼出
+        readCog = bot.get_cog("ClanBattleNameManager")
+        if readCog is not None:
+            endFlag = await readCog.changeNickInEmbeds(before, after)
+
 
     # 起動
     asyncio.run(main())
