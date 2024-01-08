@@ -36,6 +36,10 @@ class ClanBattleCommandManager(commands.Cog):
     async def messageset(self, interaction: discord.Interaction, channel: ChannelListEnum):
         '''
         クランバトル操作用のメッセージを作成する。
+
+        Parameters
+        ----------
+        channel : ChannelListEnum メッセージを作成する対象のチャンネル
         '''
         completeFlag = False
         await interaction.response.defer(ephemeral=True)
@@ -84,6 +88,75 @@ class ClanBattleCommandManager(commands.Cog):
                 await interaction.followup.send("メッセージを作成しました。(" + channel.value + ")", ephemeral=True)
             else:
                 await interaction.followup.send("メッセージの作成に失敗しました。(" + channel.value + ")", ephemeral=True)
+
+
+    @app_commands.command(name = "changename", description = "リスト内ユーザ名の編集")
+    async def changename(self, interaction: discord.Interaction, before: str, after: str):
+        '''
+        クランバトル操作用のリストに含まれる名前を変更する。
+        
+        Parameters
+        ----------
+        before : String 変更前の名前
+        after  : String 変更後の名前
+        '''
+        completeFlag = False
+        await interaction.response.defer(ephemeral=True)
+
+        # 対象のチャンネル取得
+        channelVote = discordUtil.getChannelByName(interaction.guild, aplConst.get("channelName.vote"))
+        channelList = discordUtil.getChannelByName(interaction.guild, aplConst.get("channelName.list"))
+        channelLog = discordUtil.getChannelByName(interaction.guild, aplConst.get("channelName.action"))
+
+        # 置換実行
+        try:
+            await self.editEmbedForRename(channelVote, before, after)
+            await self.editEmbedForRename(channelList, before, after)
+            completeFlag = True
+        except Exception as e:
+            # 置換に失敗した場合、リアクションを追加
+            await interaction.followup.send(content="名前の変更に失敗しました。\n"
+                                            + aplConst.get("message.changeBefore") + before + "\n"
+                                            + aplConst.get("message.changeAfter") + after)
+
+        # 処理終了後にメッセージを削除する
+        if (completeFlag):
+            await interaction.followup.send(content="名前を変更しました。\n"
+                                            + aplConst.get("message.changeBefore") + before + "\n"
+                                            + aplConst.get("message.changeAfter") + after)
+            await channelLog.send(content="名前を変更しました。\n"
+                                            + aplConst.get("message.changeBefore") + before + "\n"
+                                            + aplConst.get("message.changeAfter") + after)
+
+
+    async def editEmbedForRename(self, channel, beforeName, afterName):
+        '''
+        メッセージのembedを編集し、既に登録されている名前を変更する。
+
+        Parameters
+        ----------
+        channel    : Channel 編集するメッセージを検索するチャンネル
+        beforeName : string  編集するembedのインデックス
+        afterName  : string  参加情報を変更するユーザー
+        '''
+        async for message in channel.history(limit = 100):
+            if (message.author.id == int(aplConst.get("id.client"))):
+                editFlag = False
+                embeds = message.embeds
+                if (bool(embeds)):
+                    # bot自身が生成したメッセージかつembedが使用されている場合、変更操作を実行
+                    for i in range(0, len(embeds[0].fields)):
+                        # メッセージ内の対象単語を全て置換
+                        tempString = embeds[0].fields[i].value
+                        embeds[0] = discordUtil.replaceAllForEmbedText(embeds[0], i, "value", beforeName, afterName)
+                        
+                        if (tempString != embeds[0].fields[i].value):
+                            editFlag = True
+
+                    if (editFlag):
+                        # 置換の前後を比較し、差分があった場合のみ変更を確定
+                        await message.edit(embed=embeds[0])
+
 
 
 ##### リアクション操作 #####
