@@ -82,3 +82,91 @@ def replaceAllForEmbedText(embed, index, content, beforeString, afterString):
     
     # 置換後のembedオブジェクトを返却
     return discord.Embed.from_dict(tempDict)
+
+async def hasReaction(reactions, reactionName = None, user = None):
+    '''
+    リアクションとユーザー名から、メッセージにリアクションをしているかを判定する。
+    リアクションとユーザー名の指定有無は任意
+
+    Parameters
+    ----------
+    reactions    : List   判定するリアクションのリスト
+    reactionName : string 判定するリアクションの名称(任意)
+                          指定がない場合は、全てのリアクション(いずれか1つ)を対象とする。
+    user         : int    判定するユーザーのID(任意)
+                          指定がない場合は、全てのユーザー(いずれか1人)を対象とする。
+
+    Returns
+    -------
+    result : bool 判定結果
+    '''
+    result = False
+
+    ###### リアクション自体がない場合 ######
+    if (len(reactions) == 0):
+        return result
+
+    ###### 絵文字指定なし(どこかにリアクションされていればTrueとする) ######
+    if (reactionName is None):
+        ##### ユーザー名指定なし #####
+        if (user is None):
+            result = True
+            return result
+
+        ##### ユーザー指定あり #####
+        else:
+            for r in reactions:
+                async for u in r.users():
+                    # ユーザーIDの判定
+                    if (int(user) == u.id):
+                        # 判定終了
+                        result = True
+                        return result
+
+    ###### 絵文字指定あり ######
+    else:
+        ##### ユーザー名指定なし #####
+        if (user is None):
+            for r in reactions:
+                if (r.emoji == reactionName):
+                    # 判定終了
+                    result = True
+                    break
+            return result
+
+        ##### ユーザー名指定あり #####
+        else:
+            for r in reactions:
+                if (r.emoji == reactionName):
+                    # 絵文字の名前が一致する場合、ユーザーを判定
+                    async for u in r.users():
+                        if (int(user) == u.id):
+                            # ユーザー名一致
+                            result = True
+                            break
+                    # ユーザー名判定終了
+                    break
+            return result
+
+def getEmbedFieldIndexByName(embed, findName):
+    '''
+    指定したname要素と一致するembed.fieldのインデックスを返却する。
+    該当のインデックスが存在しない場合、Noneを返却する。
+
+    Parameters
+    ----------
+    embed     : Embed  : 検索するembedの本体
+    findName  : String : 検索するname要素の名称
+
+    Returns
+    -------
+    result : int 取得したインデックス
+    '''
+    result = None
+
+    for i in range(0, len(embed.fields)):
+        if (embed.fields[i].name == findName):
+            result = i
+            break
+    
+    return result

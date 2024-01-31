@@ -42,12 +42,14 @@
     }
 
     ,"message":{
-        "selectCheck"   : "凸が複数登録されています。反映する対象をリアクションで選択してください。"
-        ,"alertName"    : "[~~]や[||]を使用した名前は登録できません。別の名前に変更してください。"
-        ,"changeName"   : "名前の変更を検知しました。変更をbotに反映する場合は👍を押してください。"
-        ,"changeBefore" : "変更前："
-        ,"changeAfter"  : "変更後："
-        ,"channelId"    : "チャンネルID："
-        ,"messageId"    : "メッセージID："
+        "selectCheck"       : "凸が複数登録されています。反映する対象をリアクションで選択してください。"
+        ,"alertName"        : "[~~]や[||]を使用した名前は登録できません。別の名前に変更してください。"
+        ,"changeNameAction" : "名前の変更を検知しました。変更をbotに反映する場合は👍を押してください。"
+        ,"changeNameDone"   : "名前を変更しました。"
+        ,"changeBefore"     : "変更前："
+        ,"changeAfter"      : "変更後："
+        ,"channelId"        : "チャンネルID："
+        ,"messageId"        : "メッセージID："
+        ,"memberList"       : "クラメン一覧"
     }
 }
