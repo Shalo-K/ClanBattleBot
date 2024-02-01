@@ -58,7 +58,7 @@ async def getMessageAuthorIdFromPayload(client, payload):
     id = messageObject.author.id
     return id
 
-def replaceAllForEmbedText(embed, index, content, beforeString, afterString):
+def replaceAllForEmbedText(embed, index, content, beforeString, afterString, separator = None, exclusions = []):
     '''
     embed、インデックス、要素名を指定して、含まれるテキスト内容を全て置換したembedを返却する。
     実際のメッセージ更新は実行しない。
@@ -70,6 +70,8 @@ def replaceAllForEmbedText(embed, index, content, beforeString, afterString):
     content      : string 操作対象の要素名
     beforeString : string 変更前の文字列
     afterString  : string 変更後の文字列
+    separator    : string 区切り文字(任意)
+    exclusions   : list   除外する文字の一覧(任意)
 
     Returns
     -------
@@ -77,9 +79,30 @@ def replaceAllForEmbedText(embed, index, content, beforeString, afterString):
     '''
     tempDict = embed.to_dict()
 
-    # メッセージ内の対象単語を全て置換
-    tempDict["fields"][index][content] = tempDict["fields"][index][content].replace(beforeString, afterString)
-    
+    ##### 区切り文字が指定されている場合 #####
+    if (separator is not None):
+        # contentを区切り文字で配列化
+        contentArray = tempDict["fields"][index][content].split(separator)
+
+        for i, value in enumerate(contentArray):
+            # 除外文字を削除
+            tempValue = value
+            for ex in exclusions:
+                tempValue = tempValue.replace(ex, "")
+            
+            # 削除された状態の文字列に置換対象があるかを確認
+            if (beforeString == tempValue):
+                # 置換実行(除外文字はそのまま残す)
+                contentArray[i] = value.replace(beforeString, afterString)
+        
+        # 元に戻す
+        tempDict["fields"][index][content] = separator.join(contentArray)
+
+    ##### 区切り文字が指定されていない場合 #####
+    else:
+        # 全置換
+        tempDict["fields"][index][content] = tempDict["fields"][index][content].replace(beforeString, afterString)
+
     # 置換後のembedオブジェクトを返却
     return discord.Embed.from_dict(tempDict)
 

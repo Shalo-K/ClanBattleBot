@@ -148,7 +148,7 @@ class ClanBattleCommandManager(commands.Cog):
                     for i in range(0, len(embeds[0].fields)):
                         # メッセージ内の対象単語を全て置換
                         tempString = embeds[0].fields[i].value
-                        embeds[0] = discordUtil.replaceAllForEmbedText(embeds[0], i, "value", beforeName, afterName)
+                        embeds[0] = discordUtil.replaceAllForEmbedText(embeds[0], i, "value", beforeName, afterName, "\n", ["~", "|"])
                         
                         if (tempString != embeds[0].fields[i].value):
                             editFlag = True
@@ -757,7 +757,7 @@ class ClanBattleReactionManager(commands.Cog):
                     for i in range(0, len(embeds[0].fields)):
                         # メッセージ内の対象単語を全て置換
                         tempString = embeds[0].fields[i].value
-                        embeds[0] = discordUtil.replaceAllForEmbedText(embeds[0], i, "value", beforeName, afterName)
+                        embeds[0] = discordUtil.replaceAllForEmbedText(embeds[0], i, "value", beforeName, afterName, "\n", ["~", "|"])
                         
                         if (tempString != embeds[0].fields[i].value):
                             editFlag = True
