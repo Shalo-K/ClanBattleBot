@@ -1,5 +1,6 @@
 ##### import #####
 import discord
+import datetime
 
 def getChannelByName(guild, channelName):
     '''
@@ -170,6 +171,75 @@ async def hasReaction(reactions, reactionName = None, user = None):
                     # ユーザー名判定終了
                     break
             return result
+
+def includeMention(message, user):
+    '''
+    メッセージとユーザーの情報から、メッセージにユーザーへのメンションが含まれているかを判定する。
+
+    Parameters
+    ----------
+    message : message 判定する対象のメッセージ
+    user    : user    判定するユーザー
+
+    Returns
+    -------
+    result : bool 判定結果
+    '''
+    result = False
+
+    ###### 個別メンションの判定 ######
+    for member in message.mentions:
+        if (member.id == user.id):
+            result = True
+            return result
+
+    ###### ロールメンションの判定 ######
+    for role in message.role_mentions:
+        for member in role.members:
+            if (member.id == user.id):
+                result = True
+                return result
+
+    # 該当なし
+    return result
+
+
+async def getMessageFromReply(message, timeout = 5, author = None):
+    '''
+    指定したメッセージをリプライしているメッセージをlist形式で取得する。
+    取得対象の期間は、指定したメッセージが作成された時間を基準に、検索する時間を分単位で指定する。
+
+    Parameters
+    ----------
+    message : message リプライ元を検索するメッセージ
+    timeout : int     取得するメッセージの時間範囲(分)
+                        指定がない場合は、5分とする。
+    author  : str     取得する対象のユーザー(任意)
+
+    Returns
+    -------
+    messages : list 取得したメッセージのリスト
+                    取得されなかった場合は空の状態で返却される。
+    '''
+    messages = []
+    timeFrom = message.created_at
+    timeTo = timeFrom + datetime.timedelta(minutes = int(timeout))
+
+    async for m in message.channel.history(before = timeTo, after = timeFrom, oldest_first = True):
+        if (m.reference) is not None:
+            if (m.reference.message_id == message.id):
+                # リプライで参照しているメッセージIDと一致
+                if author is None:
+                    # ユーザー指定なし
+                    messages.append(m)
+                else:
+                    # ユーザー指定あり
+                    if (m.author == author):
+                        # 指定されたユーザーと一致
+                        messages.append(m)
+
+    return messages
+
 
 def getEmbedFieldIndexByName(embed, findName):
     '''

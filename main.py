@@ -73,16 +73,43 @@ if __name__ == '__main__':
         if readCog is not None:
             endFlag = await readCog.reactionAdd(message)
 
+        if not endFlag:
+            # クランバトル以外機能の呼出
+            readCog = bot.get_cog("CommonReactionManager")
+            if readCog is not None:
+                endFlag = await readCog.reactionAdd(message)
+
     @bot.event
-    async def on_member_update(before, after):
-        # リアクションが追加された時の処理
+    async def on_raw_reaction_remove(message):
+        # リアクションが削除された時の処理
         endFlag = False
 
-        # クランバトル用機能の呼出
-        readCog = bot.get_cog("ClanBattleNameManager")
+        readCog = bot.get_cog("CommonReactionManager")
         if readCog is not None:
-            endFlag = await readCog.changeNickInEmbeds(before, after)
+            endFlag = await readCog.reactionRemove(message)
 
+    @bot.event
+    async def on_member_update(before, after):
+        # サーバープロフィールが変更された時の処理
+        endFlag = False
+
+        if (before.display_name != after.display_name):
+            # クランバトル用機能の呼出
+            readCog = bot.get_cog("ClanBattleNameManager")
+            if readCog is not None:
+                endFlag = await readCog.changeNickInEmbeds(before, after)
+
+    @bot.event
+    async def on_message(message):
+        # メッセージが送信された時の処理
+        if (message.author.bot):
+            # botが送信したメッセージには反応しない
+            pass
+        else:
+            # 基本共通ロジック
+            readCog = bot.get_cog("CommonCreatedMessageManager")
+            if readCog is not None:
+                endFlag = await readCog.mainLogic(message)
 
     # 起動
     asyncio.run(main())
