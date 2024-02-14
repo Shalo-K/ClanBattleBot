@@ -9,16 +9,18 @@ from discord.ext import commands
 from util import discordUtil
 from util import formatUtil
 from util.fileController import AplConst
+from util.fileController import ExtraConfig
 
 ##### configの読み込み #####
 aplPath = os.getcwd()
 aplConst = AplConst(aplPath)
+exConf = ExtraConfig(aplPath, "aplConstantsForClanBattle")
 
 
 ##### コマンドパラメータ用のEnum #####
 class ChannelListEnum(enum.Enum):
-    vote = aplConst.get("channelName.vote")
-    list = aplConst.get("channelName.list")
+    vote = exConf.get("channelName.vote")
+    list = exConf.get("channelName.list")
 
 ##### cogのクラス定義 #####
 class ClanBattleCommandManager(commands.Cog):
@@ -48,13 +50,13 @@ class ClanBattleCommandManager(commands.Cog):
         if channelObject is None:
             await interaction.followup.send("指定されたチャンネル(" + channel.value + ")が存在しません。", ephemeral=True)
         else:
-            if (channel.value == aplConst.get("channelName.vote")):
+            if (channel.value == exConf.get("channelName.vote")):
                 for i in range(1,6):
                     # embed作成
-                    embed = discord.Embed(title= str(i) + aplConst.get("embed.vote"))
-                    embed.add_field(name= aplConst.get("embed.physic"), value= "", inline= False)
-                    embed.add_field(name= aplConst.get("embed.magic"), value= "", inline= False)
-                    embed.add_field(name= aplConst.get("embed.re"), value= "", inline= False)
+                    embed = discord.Embed(title= str(i) + exConf.get("embed.vote"))
+                    embed.add_field(name= exConf.get("embed.physic"), value= "", inline= False)
+                    embed.add_field(name= exConf.get("embed.magic"), value= "", inline= False)
+                    embed.add_field(name= exConf.get("embed.re"), value= "", inline= False)
 
                     # 凸先アンケートにリアクション付きでメッセージを作成
                     sent = await channelObject.send(embed=embed)
@@ -66,13 +68,13 @@ class ClanBattleCommandManager(commands.Cog):
                     await sent.add_reaction(aplConst.get("reaction.wrench"))
                 completeFlag = True
 
-            elif (channel.value == aplConst.get("channelName.list")):
+            elif (channel.value == exConf.get("channelName.list")):
                 for i in range(1,6):
                     # embed作成
-                    embed = discord.Embed(title= str(i) + aplConst.get("embed.list"))
-                    embed.add_field(name= aplConst.get("embed.physic"), value= "", inline= False)
-                    embed.add_field(name= aplConst.get("embed.magic"), value= "", inline= False)
-                    embed.add_field(name= aplConst.get("embed.re"), value= "", inline= False)
+                    embed = discord.Embed(title= str(i) + exConf.get("embed.list"))
+                    embed.add_field(name= exConf.get("embed.physic"), value= "", inline= False)
+                    embed.add_field(name= exConf.get("embed.magic"), value= "", inline= False)
+                    embed.add_field(name= exConf.get("embed.re"), value= "", inline= False)
 
                     # 凸参加一覧にリアクション付きでメッセージを作成
                     sent = await channelObject.send(embed=embed)
@@ -104,9 +106,9 @@ class ClanBattleCommandManager(commands.Cog):
         await interaction.response.defer(ephemeral=True)
 
         # 対象のチャンネル取得
-        channelVote = discordUtil.getChannelByName(interaction.guild, aplConst.get("channelName.vote"))
-        channelList = discordUtil.getChannelByName(interaction.guild, aplConst.get("channelName.list"))
-        channelLog = discordUtil.getChannelByName(interaction.guild, aplConst.get("channelName.action"))
+        channelVote = discordUtil.getChannelByName(interaction.guild, exConf.get("channelName.vote"))
+        channelList = discordUtil.getChannelByName(interaction.guild, exConf.get("channelName.list"))
+        channelLog = discordUtil.getChannelByName(interaction.guild, exConf.get("channelName.action"))
 
         # 置換実行
         try:
@@ -116,15 +118,15 @@ class ClanBattleCommandManager(commands.Cog):
         except Exception as e:
             # 置換に失敗した場合、リアクションを追加
             content = ["名前の変更に失敗しました。"]
-            content.append(aplConst.get("message.changeBefore") + before)
-            content.append(aplConst.get("message.changeAfter") + after)
+            content.append(exConf.get("message.changeBefore") + before)
+            content.append(exConf.get("message.changeAfter") + after)
             await interaction.followup.send(content = "\n".join(content))
 
         # 処理終了後にメッセージを送信する
         if (completeFlag):
-            content = [aplConst.get("message.changeNameDone")]
-            content.append(aplConst.get("message.changeBefore") + before)
-            content.append(aplConst.get("message.changeAfter") + after)
+            content = [exConf.get("message.changeNameDone")]
+            content.append(exConf.get("message.changeBefore") + before)
+            content.append(exConf.get("message.changeAfter") + after)
             await interaction.followup.send(content = "\n".join(content))
             await channelLog.send(content = "\n".join(content))
 
@@ -194,7 +196,7 @@ class ClanBattleReactionManager(commands.Cog):
             if (messageObject.author.id == int(aplConst.get("id.client"))):
                 # bot自身が作成したメッセージに対するリアクションの場合のアクション
                 ##### 凸先アンケート #####
-                if (messageObject.channel.name == aplConst.get("channelName.vote")):
+                if (messageObject.channel.name == exConf.get("channelName.vote")):
                     deleteFlg = await self.actionChannelVote(message, messageObject)
                     if (deleteFlg):
                         await messageObject.delete()
@@ -203,7 +205,7 @@ class ClanBattleReactionManager(commands.Cog):
                     endFlag = True
 
                 ##### 凸参加一覧 #####
-                elif (messageObject.channel.name == aplConst.get("channelName.list")):
+                elif (messageObject.channel.name == exConf.get("channelName.list")):
                     deleteFlg = await self.actionChannelList(message, messageObject)
                     if (deleteFlg):
                         await messageObject.delete()
@@ -212,14 +214,14 @@ class ClanBattleReactionManager(commands.Cog):
                     endFlag = True
 
                 ###### 凸宣言記録 ######
-                elif (messageObject.channel.name == aplConst.get("channelName.memory")):
+                elif (messageObject.channel.name == exConf.get("channelName.memory")):
                     await self.actionChannelMemory(message, messageObject)
 
                     # 後続のリアクション判定を実施しない
                     endFlag = True
                 
                 ##### botメッセージチャンネル ######
-                elif (messageObject.channel.name == aplConst.get("channelName.action")):
+                elif (messageObject.channel.name == exConf.get("channelName.action")):
                     await self.actionChannelAction(message, messageObject)
 
                     # 後続のリアクション判定を実施しない
@@ -256,13 +258,13 @@ class ClanBattleReactionManager(commands.Cog):
                 # リアクションが押された場合、ユーザーを追加/削除する
                 if (reaction.emoji.name == aplConst.get("reaction.crossed_swords")):
                     # 物理
-                    fieldName = aplConst.get("embed.physic")
+                    fieldName = exConf.get("embed.physic")
                 elif (reaction.emoji.name == aplConst.get("reaction.mage")):
                     # 魔法
-                    fieldName = aplConst.get("embed.magic")
+                    fieldName = exConf.get("embed.magic")
                 elif (reaction.emoji.name == aplConst.get("reaction.coffee")):
                     # 持越
-                    fieldName = aplConst.get("embed.re")
+                    fieldName = exConf.get("embed.re")
 
                 # メッセージを編集してリアクションを解除
                 addFlg = await self.editEmbedForEntry(targetMessage, fieldName, userName)
@@ -283,22 +285,22 @@ class ClanBattleReactionManager(commands.Cog):
                     await self.editEmbedForCheck(targetMessage, fieldName[0], userName)
                 elif (len(fieldName) > 1):
                     # 編集対象が複数ある場合、対象を確認するメッセージを送信
-                    content = [reaction.member.mention + aplConst.get("message.selectCheck")]
+                    content = [reaction.member.mention + exConf.get("message.selectCheck")]
                     content.append("||" + aplConst.get("message.channelId") + str(reaction.channel_id))
                     content.append(aplConst.get("message.messageId") + str(reaction.message_id) + "||")
                     sent = await targetMessage.reply(content = "\n".join(content))
                     
                     for n in fieldName:
                         # フィールド名に応じたリアクションを追加
-                        if (n == aplConst.get("embed.physic")):
+                        if (n == exConf.get("embed.physic")):
                             await sent.add_reaction(aplConst.get("reaction.crossed_swords"))
-                        elif (n == aplConst.get("embed.magic")):
+                        elif (n == exConf.get("embed.magic")):
                             await sent.add_reaction(aplConst.get("reaction.mage"))
-                        elif (n == aplConst.get("embed.re")):
+                        elif (n == exConf.get("embed.re")):
                             await sent.add_reaction(aplConst.get("reaction.coffee"))
-                        elif (n == aplConst.get("embed.spare")):
+                        elif (n == exConf.get("embed.spare")):
                             await sent.add_reaction(aplConst.get("reaction.star"))
-                    await sent.add_reaction(aplConst.get("reaction.x"))
+                    await sent.add_reaction(exConf.get("reaction.x"))
 
                 # リアクションを解除
                 await targetMessage.remove_reaction(reaction.emoji, reaction.member)
@@ -311,7 +313,7 @@ class ClanBattleReactionManager(commands.Cog):
                 content = embeds[0].to_dict()
                 for i in range(0, len(embeds[0].fields)):
                     content["fields"][i]["value"] = ""
-                    if (content["fields"][i]["name"] == aplConst.get("embed.spare")):
+                    if (content["fields"][i]["name"] == exConf.get("embed.spare")):
                         # 予備枠の削除
                         del content["fields"][i]
 
@@ -330,19 +332,19 @@ class ClanBattleReactionManager(commands.Cog):
                 # 予備用枠の追加と削除
                 addFlg = True
                 for i in range(0, len(embeds[0].fields)):
-                    if (embeds[0].fields[i].name == aplConst.get("embed.spare")):
+                    if (embeds[0].fields[i].name == exConf.get("embed.spare")):
                         addFlg = False
                         break
 
                 if (addFlg):
                     # 予備用枠がない場合、fieldを追加
-                    embeds[0].add_field(name= aplConst.get("embed.spare"), value= "", inline= False)
+                    embeds[0].add_field(name= exConf.get("embed.spare"), value= "", inline= False)
                     content = embeds[0].to_dict()
                     embed = discord.Embed.from_dict(content)
                     await targetMessage.edit(embed=embed)
 
                 # ユーザーの編集
-                addFlg = await self.editEmbedForEntry(targetMessage, aplConst.get("embed.spare"), userName)
+                addFlg = await self.editEmbedForEntry(targetMessage, exConf.get("embed.spare"), userName)
 
                 # リアクションを解除
                 await targetMessage.remove_reaction(reaction.emoji, reaction.member)
@@ -359,10 +361,10 @@ class ClanBattleReactionManager(commands.Cog):
                 deleteFlg = True
 
             ##### 複数の参加がある場合の確定対象再リアクション判定 #####
-            elif (aplConst.get("message.selectCheck") in messageText[0]):
+            elif (exConf.get("message.selectCheck") in messageText[0]):
                 if (("~~" in userName) or ("||" in userName)):
                     # 動作上使用できない絵文字が名前に含まれている場合、警告メッセージを送信
-                    sent = await targetMessage.reply(content=reaction.member.mention + aplConst.get("message.alertName"))
+                    sent = await targetMessage.reply(content=reaction.member.mention + exConf.get("message.alertName"))
                     await sent.add_reaction(aplConst.get("reaction.x"))
 
                 else:
@@ -370,16 +372,16 @@ class ClanBattleReactionManager(commands.Cog):
                     messageId = messageText[2].replace(aplConst.get("message.messageId"), "")
                     editMessage = await self.bot.get_channel(int(channelId)).fetch_message(int(messageId))
                     if (reaction.emoji.name == aplConst.get("reaction.crossed_swords")):
-                        await self.editEmbedForCheck(editMessage, aplConst.get("embed.physic"), userName)
+                        await self.editEmbedForCheck(editMessage, exConf.get("embed.physic"), userName)
                         deleteFlg = True
                     elif (reaction.emoji.name == aplConst.get("reaction.mage")):
-                        await self.editEmbedForCheck(editMessage, aplConst.get("embed.magic"), userName)
+                        await self.editEmbedForCheck(editMessage, exConf.get("embed.magic"), userName)
                         deleteFlg = True
                     elif (reaction.emoji.name == aplConst.get("reaction.coffee")):
-                        await self.editEmbedForCheck(editMessage, aplConst.get("embed.re"), userName)
+                        await self.editEmbedForCheck(editMessage, exConf.get("embed.re"), userName)
                         deleteFlg = True
                     elif (reaction.emoji.name == aplConst.get("reaction.star")):
-                        await self.editEmbedForCheck(editMessage, aplConst.get("embed.spare"), userName)
+                        await self.editEmbedForCheck(editMessage, exConf.get("embed.spare"), userName)
                         deleteFlg = True
 
         return deleteFlg
@@ -412,13 +414,13 @@ class ClanBattleReactionManager(commands.Cog):
                 # リアクションが押された場合、ユーザーを追加/削除する
                 if (reaction.emoji.name == aplConst.get("reaction.crossed_swords")):
                     # 物理
-                    fieldName = aplConst.get("embed.physic")
+                    fieldName = exConf.get("embed.physic")
                 elif (reaction.emoji.name == aplConst.get("reaction.mage")):
                     # 魔法
-                    fieldName = aplConst.get("embed.magic")
+                    fieldName = exConf.get("embed.magic")
                 elif (reaction.emoji.name == aplConst.get("reaction.coffee")):
                     # 持越
-                    fieldName = aplConst.get("embed.re")
+                    fieldName = exConf.get("embed.re")
 
                 # メッセージを編集してリアクションを解除
                 addFlg = await self.editEmbedForEntry(targetMessage, fieldName, userName)
@@ -443,20 +445,20 @@ class ClanBattleReactionManager(commands.Cog):
                     await self.editEmbedForCheck(targetMessage, fieldName[0], userName)
                 elif (len(fieldName) > 1):
                     # 編集対象が複数ある場合、対象を確認するメッセージを送信
-                    content = [reaction.member.mention + aplConst.get("message.selectCheck")]
+                    content = [reaction.member.mention + exConf.get("message.selectCheck")]
                     content.append("||" + aplConst.get("message.channelId") + str(reaction.channel_id))
                     content.append(aplConst.get("message.messageId") + str(reaction.message_id) + "||")
                     sent = await targetMessage.reply(content = "\n".join(content))
 
                     for n in fieldName:
                         # フィールド名に応じたリアクションを追加
-                        if (n == aplConst.get("embed.physic")):
+                        if (n == exConf.get("embed.physic")):
                             await sent.add_reaction(aplConst.get("reaction.crossed_swords"))
-                        elif (n == aplConst.get("embed.magic")):
+                        elif (n == exConf.get("embed.magic")):
                             await sent.add_reaction(aplConst.get("reaction.mage"))
-                        elif (n == aplConst.get("embed.re")):
+                        elif (n == exConf.get("embed.re")):
                             await sent.add_reaction(aplConst.get("reaction.coffee"))
-                        elif (n == aplConst.get("embed.spare")):
+                        elif (n == exConf.get("embed.spare")):
                             await sent.add_reaction(aplConst.get("reaction.star"))
                     await sent.add_reaction(aplConst.get("reaction.x"))
 
@@ -471,7 +473,7 @@ class ClanBattleReactionManager(commands.Cog):
                 content = embeds[0].to_dict()
                 for i in range(0, len(embeds[0].fields)):
                     content["fields"][i]["value"] = ""
-                    if (content["fields"][i]["name"] == aplConst.get("embed.spare")):
+                    if (content["fields"][i]["name"] == exConf.get("embed.spare")):
                         # 予備枠の削除
                         del content["fields"][i]
 
@@ -490,19 +492,19 @@ class ClanBattleReactionManager(commands.Cog):
                 # 予備用枠の追加と削除
                 addFlg = True
                 for i in range(0, len(embeds[0].fields)):
-                    if (embeds[0].fields[i].name == aplConst.get("embed.spare")):
+                    if (embeds[0].fields[i].name == exConf.get("embed.spare")):
                         addFlg = False
                         break
 
                 if (addFlg):
                     # 予備用枠がない場合、fieldを追加
-                    embeds[0].add_field(name= aplConst.get("embed.spare"), value= "", inline= False)
+                    embeds[0].add_field(name= exConf.get("embed.spare"), value= "", inline= False)
                     content = embeds[0].to_dict()
                     embed = discord.Embed.from_dict(content)
                     await targetMessage.edit(embed=embed)
 
                 # ユーザーの編集
-                addFlg = await self.editEmbedForEntry(targetMessage, aplConst.get("embed.spare"), userName)
+                addFlg = await self.editEmbedForEntry(targetMessage, exConf.get("embed.spare"), userName)
 
                 # リアクションを解除
                 await targetMessage.remove_reaction(reaction.emoji, reaction.member)
@@ -513,7 +515,7 @@ class ClanBattleReactionManager(commands.Cog):
                 # ユーザーが追加された場合、凸宣言送信
                 if (addFlg):
                     # await self.sendAttackMemory(targetMessage.guild, titleArray[0], userName, embeds[0].fields[fieldIndex].name)
-                    await self.sendAttackMemory(targetMessage.guild, titleArray[0], userName, aplConst.get("embed.spare"))
+                    await self.sendAttackMemory(targetMessage.guild, titleArray[0], userName, exConf.get("embed.spare"))
 
         ###### embedなし #####
         else:
@@ -524,10 +526,10 @@ class ClanBattleReactionManager(commands.Cog):
                 deleteFlg = True
 
             ##### 複数の参加がある場合の確定対象再リアクション判定 #####
-            elif (aplConst.get("message.selectCheck") in messageText[0]):
+            elif (exConf.get("message.selectCheck") in messageText[0]):
                 if (("~~" in userName) or ("||" in userName)):
                     # 動作上使用できない絵文字が名前に含まれている場合、警告メッセージを送信
-                    sent = await targetMessage.reply(content=reaction.member.mention + aplConst.get("message.alertName"))
+                    sent = await targetMessage.reply(content=reaction.member.mention + exConf.get("message.alertName"))
                     await sent.add_reaction(aplConst.get("reaction.x"))
 
                 else:
@@ -535,16 +537,16 @@ class ClanBattleReactionManager(commands.Cog):
                     messageId = messageText[2].replace(aplConst.get("message.messageId"), "")
                     editMessage = await self.bot.get_channel(int(channelId)).fetch_message(int(messageId))
                     if (reaction.emoji.name == aplConst.get("reaction.crossed_swords")):
-                        await self.editEmbedForCheck(editMessage, aplConst.get("embed.physic"), userName)
+                        await self.editEmbedForCheck(editMessage, exConf.get("embed.physic"), userName)
                         deleteFlg = True
                     elif (reaction.emoji.name == aplConst.get("reaction.mage")):
-                        await self.editEmbedForCheck(editMessage, aplConst.get("embed.magic"), userName)
+                        await self.editEmbedForCheck(editMessage, exConf.get("embed.magic"), userName)
                         deleteFlg = True
                     elif (reaction.emoji.name == aplConst.get("reaction.coffee")):
-                        await self.editEmbedForCheck(editMessage, aplConst.get("embed.re"), userName)
+                        await self.editEmbedForCheck(editMessage, exConf.get("embed.re"), userName)
                         deleteFlg = True
                     elif (reaction.emoji.name == aplConst.get("reaction.star")):
-                        await self.editEmbedForCheck(editMessage, aplConst.get("embed.spare"), userName)
+                        await self.editEmbedForCheck(editMessage, exConf.get("embed.spare"), userName)
                         deleteFlg = True
 
         return deleteFlg
@@ -590,7 +592,7 @@ class ClanBattleReactionManager(commands.Cog):
         if (reaction.emoji.name == aplConst.get("reaction.thumbsup")):
             # アクション実行リアクション
             messageText = targetMessage.content.split("\n")
-            if (aplConst.get("message.changeNameAction") in messageText[0]):
+            if (exConf.get("message.changeNameAction") in messageText[0]):
                 # 名前変更操作
                 deleteFlg = False
                 retryFlg = False
@@ -602,12 +604,12 @@ class ClanBattleReactionManager(commands.Cog):
                 if (retryFlg):
                     await targetMessage.remove_reaction(aplConst.get("reaction.thinking"), targetMessage.author)
 
-                beforeName = messageText[1].replace(aplConst.get("message.changeBefore"), "")
-                afterName = messageText[2].replace(aplConst.get("message.changeAfter"), "")
+                beforeName = messageText[1].replace(exConf.get("message.changeBefore"), "")
+                afterName = messageText[2].replace(exConf.get("message.changeAfter"), "")
 
                 # 検索対象のチャンネル
-                channelVote = discordUtil.getChannelByName(targetMessage.guild, aplConst.get("channelName.vote"))
-                channelList = discordUtil.getChannelByName(targetMessage.guild, aplConst.get("channelName.list"))
+                channelVote = discordUtil.getChannelByName(targetMessage.guild, exConf.get("channelName.vote"))
+                channelList = discordUtil.getChannelByName(targetMessage.guild, exConf.get("channelName.list"))
                 
                 # 置換実行
                 try:
@@ -615,7 +617,7 @@ class ClanBattleReactionManager(commands.Cog):
                     await self.editEmbedForRename(channelList, beforeName, afterName)
                     
                     # 完了メッセージ送信
-                    content = [aplConst.get("message.changeNameDone")]
+                    content = [exConf.get("message.changeNameDone")]
                     content.append(messageText[1])
                     content.append(messageText[2])
                     await targetMessage.channel.send(content="\n".join(content))
@@ -661,7 +663,7 @@ class ClanBattleReactionManager(commands.Cog):
                     # ユーザー削除
                     addFlg = False
                     fieldValueArray.remove(value)
-                    if ((fieldName == aplConst.get("embed.spare")) and (len(fieldValueArray) == 0)):
+                    if ((fieldName == exConf.get("embed.spare")) and (len(fieldValueArray) == 0)):
                         # 予備枠が空となる場合、フィールドごと削除する
                         del content["fields"][fieldIndex]
                     else:
@@ -727,7 +729,7 @@ class ClanBattleReactionManager(commands.Cog):
         attribute : string 攻撃の詳細
         '''
         # チャンネル検索
-        sendChannel = discordUtil.getChannelByName(guild, aplConst.get("channelName.memory"))
+        sendChannel = discordUtil.getChannelByName(guild, exConf.get("channelName.memory"))
         
         # 送信する情報を作成
         logTime = formatUtil.datetimeFormat("now", "%Y/%m/%d %H:%M:%S")
@@ -790,12 +792,12 @@ class ClanBattleNameManager(commands.Cog):
         after  : 変更後のユーザ情報
         '''
         # 変更確認メッセージの送信チャンネル取得
-        sendChannel = discordUtil.getChannelByName(before.guild, aplConst.get("channelName.action"))
+        sendChannel = discordUtil.getChannelByName(before.guild, exConf.get("channelName.action"))
 
         # 本文の要素
-        content = [before.mention + aplConst.get("message.changeNameAction")]
-        content.append(aplConst.get("message.changeBefore") + before.nick)
-        content.append(aplConst.get("message.changeAfter") + after.nick)
+        content = [before.mention + exConf.get("message.changeNameAction")]
+        content.append(exConf.get("message.changeBefore") + before.display_name)
+        content.append(exConf.get("message.changeAfter") + after.display_name)
 
         # 送信
         sent = await sendChannel.send(content="\n".join(content))
