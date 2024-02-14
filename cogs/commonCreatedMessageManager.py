@@ -72,6 +72,7 @@ class CommonCreatedMessageManager(commands.Cog):
 
         # メッセージ文言の作成
         contentArray = [aplConst.get("message.reactionList")]
+        contentArray.append("```リアクションが未登録です```")
         if (len(targetNames) > 0):
             contentArray.append(aplConst.get("message.noReaction"))
             contentArray.append("```" + " ".join(targetNames) + "```")

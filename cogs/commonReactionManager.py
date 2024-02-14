@@ -51,7 +51,7 @@ class CommonReactionManager(commands.Cog):
         return endFlag
     
 
-    ##### リアクション削除のロジック #####
+    ##### リアクション解除のロジック #####
     async def reactionRemove(self, reaction: discord.RawReactionActionEvent):
         '''
         リアクション削除時処理のメインロジック
@@ -71,6 +71,33 @@ class CommonReactionManager(commands.Cog):
             if (await discordUtil.getMessageAuthorIdFromPayload(self.bot, reaction) == int(aplConst.get("id.client"))):
                 ##### bot自身が作成したメッセージに対するリアクションの場合のアクション #####
                 await self.checkReactionToBot(reaction)
+
+        return endFlag
+
+
+    ##### リアクション削除のロジック #####
+    async def reactionClear(self, payload: discord.RawReactionClearEvent):
+        '''
+        リアクション削除時処理のメインロジック
+
+        Parameters
+        ----------
+        payload : RawReactionClearEvent リアクションが削除されたメッセージのpayload
+
+        Returns
+        -------
+        endFlag : 処理終了フラグ
+        '''
+        endFlag = False
+
+        # 対象のメッセージを取得
+        message = await self.bot.get_channel(payload.channel_id).fetch_message(payload.message_id)
+        
+        if (message.author.id == int(aplConst.get("id.client"))):
+            ##### bot自身が作成したメッセージに対するリアクションの場合のアクション #####
+            if (aplConst.get("message.reactionList") in message.content):
+                # リアクション一覧の集計
+                await self.editReactionListMessage(message)
 
         return endFlag
 
@@ -135,6 +162,7 @@ class CommonReactionManager(commands.Cog):
         targetUsers = []
         targetNames = []
         reactionUsers = []
+        message = await message.fetch()
 
         ##### 集計するユーザーの一覧を取得 #####
         messageReference = message.reference
@@ -151,14 +179,18 @@ class CommonReactionManager(commands.Cog):
 
         # 重複を削除して表示名に置き換え
         targetUsers = list(set(targetUsers))
-        targetNames = [user.display_name for user in targetUsers if not (user.bot)]
+        targetUsers = [user for user in targetUsers if not (user.bot)]
+        targetNames = [user.display_name for user in targetUsers]
         
         ##### メッセージ文言の作成 #####
         contentArray = [aplConst.get("message.reactionList")]
-        for r in message.reactions:
-            # リアクションの一覧を取得
-            if not (r.is_custom_emoji()):
-                # botが参照可能な絵文字のみ集計対象にする
+
+        # カスタム絵文字でないリアクションを取得
+        reactions = [r for r in message.reactions if not (r.is_custom_emoji())]
+        if (len(reactions) > 0):
+            # 集計対象のリアクションが存在する場合
+            for r in reactions:
+                # リアクションの一覧を取得
                 reactionUsers = [u.display_name async for u in r.users() if not (u.bot)]
 
                 contentArray.append(str(r.emoji))
@@ -173,13 +205,17 @@ class CommonReactionManager(commands.Cog):
                         if (tn == ru):
                             targetNames.remove(ru)
                             break
-        
-        # どこにもリアクションしていないユーザー
-        contentArray.append(aplConst.get("message.noReaction"))
-        if (len(targetNames) > 0):
-            contentArray.append("```" + " ".join(targetNames) + "```")
         else:
-            contentArray.append("```該当者なし```")
+            # 集計対象のリアクションが存在しない場合
+            contentArray.append("```リアクションが未登録です```")
+
+        if (len(targetUsers) > 0):
+            # どこにもリアクションしていないユーザー
+            contentArray.append(aplConst.get("message.noReaction"))
+            if (len(targetNames) > 0):
+                contentArray.append("```" + " ".join(targetNames) + "```")
+            else:
+                contentArray.append("```該当者なし```")
 
         # メッセージを編集
         await message.edit(content="\n".join(contentArray))

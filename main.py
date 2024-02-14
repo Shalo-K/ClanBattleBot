@@ -81,12 +81,30 @@ if __name__ == '__main__':
 
     @bot.event
     async def on_raw_reaction_remove(message):
-        # リアクションが削除された時の処理
+        # リアクションが解除された時の処理
         endFlag = False
 
         readCog = bot.get_cog("CommonReactionManager")
         if readCog is not None:
             endFlag = await readCog.reactionRemove(message)
+
+    @bot.event
+    async def on_raw_reaction_clear_emoji(payload):
+        # リアクションが削除された時の処理
+        endFlag = False
+
+        readCog = bot.get_cog("CommonReactionManager")
+        if readCog is not None:
+            endFlag = await readCog.reactionClear(payload)
+
+    @bot.event
+    async def on_raw_reaction_clear(payload):
+        # リアクションが全削除された時の処理
+        endFlag = False
+
+        readCog = bot.get_cog("CommonReactionManager")
+        if readCog is not None:
+            endFlag = await readCog.reactionClear(payload)
 
     @bot.event
     async def on_member_update(before, after):
