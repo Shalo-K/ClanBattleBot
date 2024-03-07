@@ -18,21 +18,18 @@ def datetimeFormat(target, format):
     if (target == "now"):
         dt = datetime.datetime.now()
     else:
-        param = target.split()
         # パラメータチェック
-        if (len(param) != 2):
-            return result
-        if (len(param[0]) != 8 or len(param[1]) != 6):
+        if (len(target) != 14):
             return result
 
         # パラメータからdatetime型に変換
         dt = datetime.datetime(
-            year = param[0][0:4],
-            month = param[0][4:6],
-            day = param[0][6:8],
-            hour = param[1][0:2],
-            minute = param[1][2:4],
-            second = param[1][4:6],
+            year = int(target[0:4]),
+            month = int(target[4:6]),
+            day = int(target[6:8]),
+            hour = int(target[8:10]),
+            minute = int(target[10:12]),
+            second = int(target[12:14]),
             microsecond = 0
         )
     
