@@ -1,4 +1,5 @@
 ###### import #####
+import datetime
 import enum
 import os
 import discord
@@ -129,6 +130,56 @@ class ClanBattleCommandManager(commands.Cog):
             content.append(exConf.get("message.changeAfter") + after)
             await interaction.followup.send(content = "\n".join(content))
             await channelLog.send(content = "\n".join(content))
+
+
+    @app_commands.command(name = "l", description = "凸履歴を1日分取得する")
+    async def getLogMemory(self, interaction: discord.Interaction, target: str):
+        '''
+        凸履歴を1日分取得する。
+        取得結果はコマンド実行者にDMで送信する。
+        
+        Parameters
+        ----------
+        target : String 取得する日付(yyyymmdd)
+        '''
+        resultMessage = ""
+        # パラメータチェック
+        if (len(target) != 8):
+            await interaction.response.send_message(content="パラメータに不備があります。yyyymmdd形式で指定してください。", ephemeral=True)
+
+        else:
+            await interaction.response.defer(ephemeral=True)
+            try:
+                # 対象の日付を変換
+                timeFrom = datetime.datetime(
+                    year = int(target[0:4]),
+                    month = int(target[4:6]),
+                    day = int(target[6:8]),
+                    hour = 5,
+                    minute = 0,
+                    second = 0,
+                    microsecond = 0
+                )
+                timeTo = timeFrom + datetime.timedelta(days= 1)
+
+                # 対象チャンネルを取得
+                ch = discordUtil.getChannelByName(interaction.guild, exConf.get("channelName.memory"))
+                if (ch == None):
+                    resultMessage = exConf.get("channelName.memory") + "チャンネルを取得できませんでした。"
+                
+                else:
+                    # メッセージを取得してDMで送信
+                    getMessages = [m.content.replace("`", "") async for m in ch.history(before = timeTo, after = timeFrom, oldest_first = True)]
+                    await interaction.user.send(content= "\n".join(getMessages))
+                    resultMessage = timeFrom.strftime("%Y/%m/%d") + "の凸情報を取得しました。"
+
+            except ValueError as ve:
+                # 日付情報の変換エラー
+                resultMessage = "パラメータに不備があります。yyyymmdd形式で指定してください。"
+            
+            finally:
+                # 処理終了後のメッセージ送信(共通)
+                await interaction.followup.send(content= resultMessage, ephemeral= True)
 
 
     async def editEmbedForRename(self, channel, beforeName, afterName):
