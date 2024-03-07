@@ -151,7 +151,7 @@ class ClanBattleCommandManager(commands.Cog):
             await interaction.response.defer(ephemeral=True)
             try:
                 # 対象の日付を変換
-                timeFrom = datetime.datetime(
+                baseTime = datetime.datetime(
                     year = int(target[0:4]),
                     month = int(target[4:6]),
                     day = int(target[6:8]),
@@ -160,7 +160,6 @@ class ClanBattleCommandManager(commands.Cog):
                     second = 0,
                     microsecond = 0
                 )
-                timeTo = timeFrom + datetime.timedelta(days= 1)
 
                 # 対象チャンネルを取得
                 ch = discordUtil.getChannelByName(interaction.guild, exConf.get("channelName.memory"))
@@ -169,9 +168,24 @@ class ClanBattleCommandManager(commands.Cog):
                 
                 else:
                     # メッセージを取得してDMで送信
-                    getMessages = [m.content.replace("`", "") async for m in ch.history(before = timeTo, after = timeFrom, oldest_first = True)]
-                    await interaction.user.send(content= "\n".join(getMessages))
-                    resultMessage = timeFrom.strftime("%Y/%m/%d") + "の凸情報を取得しました。"
+                    getMessages = []
+                    for i in range(0, 25):
+                        timeFrom = baseTime + datetime.timedelta(hours= i)
+                        timeTo = timeFrom + datetime.timedelta(hours= 1)
+                        getMessages.extend([m.content.replace("`", "").replace(" ", ",") async for m in ch.history(before = timeTo, after = timeFrom, oldest_first = True) if "`" in m.content])
+                        await interaction.followup.send(content=timeFrom.strftime("%Y/%m/%d %H") + "時台の凸情報を取得しました。", ephemeral= True)
+                    
+                    # csv出力
+                    outPath = aplPath + "/tmp/memory_" + target + ".csv"
+                    await interaction.followup.send(content="全てのデータを取得完了。csv出力します。", ephemeral= True)
+                    with open(outPath, "w") as f:
+                        f.write("\n".join(getMessages))
+                    
+                    # 完了メッセージ
+                    await interaction.user.send(file= discord.File(outPath))
+                    resultMessage = baseTime.strftime("%Y/%m/%d") + "の凸情報を取得しました。"
+                    # 送信後にファイル削除
+                    os.remove(outPath)
 
             except ValueError as ve:
                 # 日付情報の変換エラー
