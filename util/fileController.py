@@ -1,11 +1,11 @@
 import json
 
 def input_json(filename):
-    with open(filename, 'r') as f:
+    with open(filename, 'r', encoding='utf-8') as f:
         return json.load(f)
 
 def output_json(filename, obj):
-    with open(filename, 'w') as f:
+    with open(filename, 'w', encoding='utf-8') as f:
         json.dump(obj, f, indent=4, ensure_ascii=False)
 
 class AplConst:
