@@ -142,12 +142,16 @@ class ClanBattleCommandManager(commands.Cog):
         ----------
         target : String 取得する日付(yyyymmdd)
         '''
-        resultMessage = ""
+        # DMでは実行できないように制御
+        if (interaction.guild_id == None):
+            await interaction.response.send_message(content= "このコマンドはDMでは使用できません。", ephemeral= True)
+
         # パラメータチェック
-        if (len(target) != 8):
+        elif (len(target) != 8):
             await interaction.response.send_message(content="パラメータに不備があります。yyyymmdd形式で指定してください。", ephemeral=True)
 
         else:
+            resultMessage = ""
             await interaction.response.defer(ephemeral=True)
             try:
                 # 対象の日付を変換
@@ -173,12 +177,16 @@ class ClanBattleCommandManager(commands.Cog):
                         timeFrom = baseTime + datetime.timedelta(hours= i)
                         timeTo = timeFrom + datetime.timedelta(hours= 1)
                         getMessages.extend([m.content.replace("`", "").replace(" ", ",") async for m in ch.history(before = timeTo, after = timeFrom, oldest_first = True) if "`" in m.content])
-                        await interaction.followup.send(content=timeFrom.strftime("%Y/%m/%d %H") + "時台の凸情報を取得しました。", ephemeral= True)
+                        if (i != 0 and i % 3 == 0):
+                            await interaction.followup.send(
+                                content = (timeFrom + datetime.timedelta(hours= -3)).strftime("%Y/%m/%d %H") + "～" + timeFrom.strftime("%H") + "時台の凸情報を取得しました。",
+                                ephemeral = True
+                            )
                     
                     # csv出力
                     outPath = aplPath + "/tmp/memory_" + target + ".csv"
                     await interaction.followup.send(content="全てのデータを取得完了。csv出力します。", ephemeral= True)
-                    with open(outPath, "w") as f:
+                    with open(outPath, "w", encoding='utf-8') as f:
                         f.write("\n".join(getMessages))
                     
                     # 完了メッセージ
